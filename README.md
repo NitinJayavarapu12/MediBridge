@@ -313,14 +313,3 @@ Used for: Simulating discharge documents without requiring real patient data
 MediBridge is a portfolio project built for educational purposes. It is **not a certified medical device** and should not be used for real patient care without review by qualified healthcare professionals. All AI-generated summaries should be verified by a licensed clinician before use.
 
 ---
-
-## 👤 Author
-
-Built by [Your Name](https://github.com/yourusername)  
-Connect on [LinkedIn](https://linkedin.com/in/yourprofile)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
