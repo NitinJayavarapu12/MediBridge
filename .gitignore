@@ -1,0 +1,11 @@
+.env
+venv/
+data/
+reports/output/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.pdf
+*.html
+node_modules/
