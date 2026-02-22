@@ -6,6 +6,4 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
-*.pdf
-*.html
 node_modules/

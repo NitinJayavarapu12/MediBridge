@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediBridge — AI Patient Care</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #0f3460;
+      --accent: #e94560;
+      --light: #f4f7fb;
+      --white: #ffffff;
+      --success: #27ae60;
+      --warning: #e67e22;
+      --danger: #e74c3c;
+      --text: #2c3e50;
+      --muted: #7f8c8d;
+    }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--light); color: var(--text); }
+
+    /* ── Sidebar ── */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 240px; background: var(--primary); color: white;
+      padding: 30px 0; position: fixed; height: 100vh; overflow-y: auto;
+    }
+    .sidebar .logo { padding: 0 24px 30px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar .logo h2 { font-size: 20px; }
+    .sidebar .logo p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+    .sidebar nav { padding: 20px 0; }
+    .nav-item {
+      padding: 12px 24px; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; gap: 10px;
+      transition: background 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); }
+    .nav-item .icon { font-size: 18px; }
+
+    /* ── Main ── */
+    .main { margin-left: 240px; padding: 32px; flex: 1; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white); border-radius: 12px;
+      padding: 24px; margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .card h3 { font-size: 15px; color: var(--primary); margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 2px solid var(--light); }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--white); border-radius: 10px; padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;
+    }
+    .stat-card .number { font-size: 32px; font-weight: 700; color: var(--primary); }
+    .stat-card .label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600;
+      color: var(--text); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 14px; border: 1.5px solid #e0e0e0;
+      border-radius: 8px; font-size: 14px; outline: none;
+      transition: border-color 0.2s; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    textarea { resize: vertical; min-height: 120px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 22px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #1a4a7a; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Result box ── */
+    .result-box {
+      background: #f8faff; border: 1.5px solid #dce8ff;
+      border-radius: 10px; padding: 18px; margin-top: 16px;
+      font-size: 14px; line-height: 1.7; white-space: pre-line;
+    }
+    .result-box.success { border-color: #b7e4c7; background: #f0fdf4; }
+    .result-box.danger  { border-color: #f5c6cb; background: #fff5f5; }
+    .result-box.warning { border-color: #fde8c8; background: #fffbf0; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 12px;
+      font-size: 12px; font-weight: 600;
+    }
+    .badge-red { background: #ffe0e0; color: var(--danger); }
+    .badge-green { background: #e0f5e9; color: var(--success); }
+    .badge-blue { background: #e0eeff; color: var(--primary); }
+
+    /* ── Patient list ── */
+    .patient-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--light);
+    }
+    .patient-item:last-child { border-bottom: none; }
+    .patient-info .name { font-weight: 600; font-size: 15px; }
+    .patient-info .meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    /* ── Chat ── */
+    .chat-box {
+      background: #f8faff; border-radius: 10px;
+      padding: 16px; height: 320px; overflow-y: auto;
+      margin-bottom: 14px; border: 1px solid #dce8ff;
+    }
+    .chat-msg { margin-bottom: 14px; }
+    .chat-msg .sender { font-size: 11px; font-weight: 700;
+      color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+    .chat-msg .bubble {
+      display: inline-block; padding: 10px 14px;
+      border-radius: 12px; font-size: 14px; max-width: 80%; line-height: 1.5;
+    }
+    .chat-msg.bot .bubble { background: var(--primary); color: white; border-radius: 4px 12px 12px 12px; }
+    .chat-msg.user .bubble { background: #e0eeff; color: var(--text); border-radius: 12px 4px 12px 12px; }
+    .chat-msg.flagged .bubble { background: #ffe0e0; border: 1px solid var(--danger); }
+    .chat-input-row { display: flex; gap: 10px; }
+    .chat-input-row input { flex: 1; }
+
+    /* ── Loader ── */
+    .loader {
+      display: none; text-align: center; padding: 20px;
+      color: var(--muted); font-size: 14px;
+    }
+    .loader.active { display: block; }
+    .spinner {
+      display: inline-block; width: 20px; height: 20px;
+      border: 3px solid #e0e0e0; border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Misc ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .tag {
+      background: var(--light); border: 1px solid #ddd;
+      padding: 4px 12px; border-radius: 20px; font-size: 12px;
+    }
+    .tag.red { background: #fff0f0; border-color: #f5c6cb; color: var(--danger); }
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+    hr { border: none; border-top: 1px solid var(--light); margin: 20px 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <h2>🏥 MediBridge</h2>
+      <p>AI Patient Care System</p>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('patients')">
+        <span class="icon">👤</span> Patients
+      </div>
+      <div class="nav-item" onclick="showPage('process')">
+        <span class="icon">🔬</span> Process Record
+      </div>
+      <div class="nav-item" onclick="showPage('checkin')">
+        <span class="icon">💬</span> Check-In Bot
+      </div>
+      <div class="nav-item" onclick="showPage('report')">
+        <span class="icon">📄</span> Generate Report
+      </div>
+      <div class="nav-item" onclick="showPage('alerts')">
+        <span class="icon">🚨</span> Alerts
+      </div>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Overview of all patients and alerts</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="number" id="stat-patients">—</div>
+          <div class="label">Total Patients</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="stat-flagged" style="color:var(--danger)">—</div>
+          <div class="label">Flagged Check-Ins</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="stat-status" style="color:var(--success)">✅</div>
+          <div class="label">API Status</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>⚠️ Recent Flagged Check-Ins</h3>
+        <div id="dashboard-flags"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- Patients -->
+    <div id="page-patients" class="page">
+      <div class="page-title">Patients</div>
+      <div class="page-sub">Register and manage patients</div>
+      <div class="two-col">
+        <div class="card">
+          <h3>➕ Register New Patient</h3>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="p-name" placeholder="e.g. John Doe" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="text" id="p-phone" placeholder="+1234567890" />
+            </div>
+            <div class="form-group">
+              <label>Age</label>
+              <input type="number" id="p-age" placeholder="65" />
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="createPatient()">Register Patient</button>
+          <div id="patient-create-result"></div>
+        </div>
+        <div class="card">
+          <h3>👥 All Patients</h3>
+          <div id="patient-list"><div class="empty-state">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Process Record -->
+    <div id="page-process" class="page">
+      <div class="page-title">Process Medical Record</div>
+      <div class="page-sub">Run the AI pipeline on a discharge document</div>
+      <div class="card">
+        <h3>⚙️ Pipeline Settings</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Patient ID</label>
+            <input type="text" id="proc-patient-id" placeholder="Paste patient UUID here" />
+          </div>
+          <div class="form-group">
+            <label>Source</label>
+            <select id="proc-source" onchange="toggleSource()">
+              <option value="dataset">From MTSamples Dataset</option>
+              <option value="text">From Custom Text</option>
+            </select>
+          </div>
+        </div>
+        <div id="source-dataset">
+          <div class="form-group">
+            <label>Dataset Record Index (0 – 4998)</label>
+            <input type="number" id="proc-index" value="0" min="0" max="4998" />
+          </div>
+          <button class="btn btn-outline" onclick="previewDataset()" style="margin-bottom:12px">
+            👁 Preview Record
+          </button>
+          <div id="dataset-preview"></div>
+        </div>
+        <div id="source-text" style="display:none">
+          <div class="form-group">
+            <label>Paste Medical Transcription</label>
+            <textarea id="proc-text" placeholder="Paste discharge notes here..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="processRecord()" style="margin-top:8px">
+          🚀 Run AI Pipeline
+        </button>
+        <div class="loader" id="proc-loader">
+          <span class="spinner"></span> Running pipeline — this takes 10–20 seconds...
+        </div>
+      </div>
+      <div id="proc-results"></div>
+    </div>
+
+    <!-- Check-In Bot -->
+    <div id="page-checkin" class="page">
+      <div class="page-title">Check-In Bot</div>
+      <div class="page-sub">Simulate the SMS patient follow-up conversation</div>
+      <div class="two-col">
+        <div class="card">
+          <h3>🔧 Setup</h3>
+          <div class="form-group">
+            <label>Patient ID</label>
+            <input type="text" id="ci-patient-id" placeholder="Patient UUID" />
+          </div>
+          <div class="form-group">
+            <label>Recovery Day</label>
+            <input type="number" id="ci-day" value="1" min="1" />
+          </div>
+          <button class="btn btn-primary" onclick="startCheckin()">Start Check-In</button>
+        </div>
+        <div class="card">
+          <h3>💬 Conversation</h3>
+          <div class="chat-box" id="chat-box">
+            <div class="empty-state">Start a check-in to begin the conversation</div>
+          </div>
+          <div class="chat-input-row">
+            <input type="text" id="ci-message" placeholder="Type patient response..."
+              onkeydown="if(event.key==='Enter') sendCheckin()" />
+            <button class="btn btn-primary" onclick="sendCheckin()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report -->
+    <div id="page-report" class="page">
+      <div class="page-title">Generate Report</div>
+      <div class="page-sub">Download a full caregiver PDF report for any patient</div>
+      <div class="card">
+        <h3>📄 Report Generator</h3>
+        <div class="form-group">
+          <label>Patient ID</label>
+          <input type="text" id="rep-patient-id" placeholder="Patient UUID" />
+        </div>
+        <button class="btn btn-primary" onclick="generateReport()">Generate & Download Report</button>
+        <div id="rep-result" style="margin-top:14px"></div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="page-alerts" class="page">
+      <div class="page-title">🚨 Alerts</div>
+      <div class="page-sub">All flagged check-in responses across all patients</div>
+      <div class="card">
+        <h3>Flagged Responses</h3>
+        <div id="alerts-list"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+  const API = "http://localhost:8000";
+
+  // ── Navigation ──────────────────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'patients') loadPatients();
+    if (name === 'alerts') loadAlerts();
+  }
+
+  // ── Fetch helpers ────────────────────────────────────────────────
+  async function get(path) {
+    const r = await fetch(API + path);
+    return r.json();
+  }
+  async function post(path, body) {
+    const r = await fetch(API + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return r.json();
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────────
+  async function loadDashboard() {
+    const [patients, flagged] = await Promise.all([
+      get('/patients/all'),
+      get('/checkin/flagged/all')
+    ]);
+    document.getElementById('stat-patients').textContent = patients.count ?? '—';
+    document.getElementById('stat-flagged').textContent = flagged.count ?? '0';
+
+    const el = document.getElementById('dashboard-flags');
+    if (!flagged.flagged || flagged.flagged.length === 0) {
+      el.innerHTML = '<div class="empty-state">✅ No flagged check-ins</div>';
+      return;
+    }
+    el.innerHTML = flagged.flagged.slice(0, 5).map(f => `
+      <div class="patient-item">
+        <div class="patient-info">
+          <div class="name">${f.patients?.name || 'Unknown'} — Day ${f.day_number}</div>
+          <div class="meta">${f.patient_message}</div>
+          <div class="meta" style="color:var(--danger)">${f.flag_reason || ''}</div>
+        </div>
+        <span class="badge badge-red">⚠ Flagged</span>
+      </div>`).join('');
+  }
+
+  // ── Patients ─────────────────────────────────────────────────────
+  async function createPatient() {
+    const name = document.getElementById('p-name').value.trim();
+    const phone = document.getElementById('p-phone').value.trim();
+    const age = parseInt(document.getElementById('p-age').value);
+    if (!name || !phone || !age) {
+      alert('Please fill in all fields'); return;
+    }
+    const res = await post('/patients/create', { name, phone, age });
+    const el = document.getElementById('patient-create-result');
+    if (res.success) {
+      el.innerHTML = `<div class="result-box success">
+        ✅ Patient created!<br>
+        <strong>ID:</strong> <code>${res.patient.id}</code><br>
+        <small>Copy this ID — you'll need it for processing and check-ins</small>
+      </div>`;
+      loadPatients();
+    } else {
+      el.innerHTML = `<div class="result-box danger">❌ ${res.detail}</div>`;
+    }
+  }
+
+  async function loadPatients() {
+    const res = await get('/patients/all');
+    const el = document.getElementById('patient-list');
+    if (!res.patients || res.patients.length === 0) {
+      el.innerHTML = '<div class="empty-state">No patients yet</div>'; return;
+    }
+    el.innerHTML = res.patients.map(p => `
+      <div class="patient-item">
+        <div class="patient-info">
+          <div class="name">${p.name}</div>
+          <div class="meta">Age ${p.age} · ${p.phone}</div>
+          <div class="meta" style="font-size:11px;margin-top:4px">
+            <code>${p.id}</code>
+          </div>
+        </div>
+        <span class="badge badge-blue">Active</span>
+      </div>`).join('');
+  }
+
+  // ── Process ──────────────────────────────────────────────────────
+  function toggleSource() {
+    const src = document.getElementById('proc-source').value;
+    document.getElementById('source-dataset').style.display = src === 'dataset' ? 'block' : 'none';
+    document.getElementById('source-text').style.display = src === 'text' ? 'block' : 'none';
+  }
+
+  async function previewDataset() {
+    const idx = parseInt(document.getElementById('proc-index').value);
+    const res = await get(`/dataset/sample/${idx}`);
+    const el = document.getElementById('dataset-preview');
+    if (res.success) {
+      el.innerHTML = `<div class="result-box">
+        <strong>Specialty:</strong> ${res.record.specialty}<br>
+        <strong>Description:</strong> ${res.record.description}<br><br>
+        <strong>Preview:</strong><br>${res.record.transcription_preview}
+      </div>`;
+    }
+  }
+
+  async function processRecord() {
+    const patientId = document.getElementById('proc-patient-id').value.trim();
+    const source = document.getElementById('proc-source').value;
+    if (!patientId) { alert('Enter a Patient ID first'); return; }
+
+    document.getElementById('proc-loader').classList.add('active');
+    document.getElementById('proc-results').innerHTML = '';
+
+    let res;
+    if (source === 'dataset') {
+      const idx = parseInt(document.getElementById('proc-index').value);
+      res = await post('/process/from-dataset', { patient_id: patientId, dataset_index: idx });
+    } else {
+      const text = document.getElementById('proc-text').value.trim();
+      if (!text) { alert('Paste some text first'); return; }
+      res = await post('/process/from-text', { patient_id: patientId, transcription: text });
+    }
+
+    document.getElementById('proc-loader').classList.remove('active');
+
+    if (!res.success) {
+      document.getElementById('proc-results').innerHTML =
+        `<div class="card"><div class="result-box danger">❌ ${res.detail}</div></div>`;
+      return;
+    }
+
+    const cp = res.result.care_plan;
+    const cc = res.result.confidence_check;
+    const meds = (cp.medications || []).map(m =>
+      `<tr><td>${m.name}</td><td>${m.dose}</td><td>${m.frequency}</td><td>${m.duration}</td></tr>`
+    ).join('') || '<tr><td colspan="4">None recorded</td></tr>';
+
+    const redFlags = (cp.red_flags || []).map(r =>
+      `<span class="tag red">⚠ ${r}</span>`).join('') || 'None';
+
+    const safetyColor = cc.overall_safe ? 'success' : 'warning';
+    const safetyText = cc.overall_safe
+      ? '✅ High confidence — all fields extracted reliably'
+      : '⚠️ Some fields flagged — review before use';
+
+    document.getElementById('proc-results').innerHTML = `
+      <div class="card">
+        <h3>📋 Diagnosis</h3>
+        <div class="result-box">${cp.diagnosis || 'Not specified'}</div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>🚫 Restrictions</h3>
+          <div class="tag-list">${(cp.restrictions||[]).map(r=>`<span class="tag">${r}</span>`).join('')||'None'}</div>
+        </div>
+        <div class="card">
+          <h3>🚨 Red Flag Symptoms</h3>
+          <div class="tag-list">${redFlags}</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>💊 Medications</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead><tr style="background:#0f3460;color:white">
+            <th style="padding:8px">Name</th><th style="padding:8px">Dose</th>
+            <th style="padding:8px">Frequency</th><th style="padding:8px">Duration</th>
+          </tr></thead>
+          <tbody>${meds}</tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>🗣 Plain Language Summary</h3>
+        <div class="result-box">${res.result.plain_language_summary}</div>
+      </div>
+      <div class="card">
+        <h3>🤖 AI Confidence Check</h3>
+        <div class="result-box ${safetyColor}">${safetyText}</div>
+      </div>`;
+  }
+
+  // ── Check-In ─────────────────────────────────────────────────────
+  let currentPatientId = null;
+  let currentDay = 1;
+
+  async function startCheckin() {
+    currentPatientId = document.getElementById('ci-patient-id').value.trim();
+    currentDay = parseInt(document.getElementById('ci-day').value);
+    if (!currentPatientId) { alert('Enter a Patient ID'); return; }
+    const chat = document.getElementById('chat-box');
+    chat.innerHTML = '';
+    addBubble('bot', `👋 Hi! I'm MediBridge. I'm checking in on your recovery — Day ${currentDay}. How are you feeling today?`);
+  }
+
+  async function sendCheckin() {
+    const input = document.getElementById('ci-message');
+    const msg = input.value.trim();
+    if (!msg || !currentPatientId) return;
+    input.value = '';
+    addBubble('user', msg);
+
+    const res = await post('/checkin/respond', {
+      patient_id: currentPatientId,
+      patient_message: msg,
+      day_number: currentDay
+    });
+
+    if (res.flagged) {
+      addBubble('bot', res.ai_response, true);
+      addBubble('bot', `🚨 Alert logged: ${res.flag_reason}`, false, true);
+    } else {
+      addBubble('bot', res.ai_response);
+    }
+  }
+
+  function addBubble(sender, text, flagged = false, isAlert = false) {
+    const chat = document.getElementById('chat-box');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${sender}${flagged ? ' flagged' : ''}`;
+    div.innerHTML = `
+      <div class="sender">${sender === 'bot' ? '🤖 MediBridge' : '👤 Patient'}</div>
+      <div class="bubble" style="${isAlert ? 'background:#fff0f0;color:#c0392b;font-weight:600' : ''}">${text}</div>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  // ── Report ───────────────────────────────────────────────────────
+  async function generateReport() {
+    const patientId = document.getElementById('rep-patient-id').value.trim();
+    if (!patientId) { alert('Enter a Patient ID'); return; }
+    document.getElementById('rep-result').innerHTML =
+      '<div class="result-box">⏳ Generating report...</div>';
+
+    const response = await fetch(`${API}/report/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_id: patientId })
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `medibridge_report.pdf`;
+      a.click();
+      document.getElementById('rep-result').innerHTML =
+        '<div class="result-box success">✅ Report downloaded!</div>';
+    } else {
+      const err = await response.json();
+      document.getElementById('rep-result').innerHTML =
+        `<div class="result-box danger">❌ ${err.detail}</div>`;
+    }
+  }
+
+  // ── Alerts ───────────────────────────────────────────────────────
+  async function loadAlerts() {
+    const res = await get('/checkin/flagged/all');
+    const el = document.getElementById('alerts-list');
+    if (!res.flagged || res.flagged.length === 0) {
+      el.innerHTML = '<div class="empty-state">✅ No flagged responses</div>'; return;
+    }
+    el.innerHTML = res.flagged.map(f => `
+      <div class="patient-item">
+        <div class="patient-info">
+          <div class="name">${f.patients?.name || 'Unknown Patient'} — Day ${f.day_number}</div>
+          <div class="meta">💬 "${f.patient_message}"</div>
+          <div class="meta" style="color:var(--danger);margin-top:4px">⚠ ${f.flag_reason || 'Red flag detected'}</div>
+          <div class="meta" style="font-size:11px;margin-top:2px">🤖 ${f.ai_response}</div>
+        </div>
+        <span class="badge badge-red">🚨 Flagged</span>
+      </div>`).join('');
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────
+  loadDashboard();
+</script>
+</body>
+</html>
