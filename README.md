@@ -7,7 +7,7 @@
 
 > An end-to-end LLM pipeline that parses hospital discharge documents, translates clinical instructions into plain language, and conducts automated patient follow-up — reducing information loss at the point of care.
 
-> 🚀 **[Live Demo → medibridge-zhg4.onrender.com](https://smart-place-recommender.onrender.com)**
+> 🚀 **[Live Demo → medibridge-zhg4.onrender.com](https://medibridge-zhg4.onrender.com)**
 
 ---
 
