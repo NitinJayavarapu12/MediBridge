@@ -4,7 +4,6 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green?style=flat-square&logo=fastapi)
 ![Groq](https://img.shields.io/badge/LLM-Groq%20%7C%20LLaMA%203.3-orange?style=flat-square)
 ![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=flat-square&logo=supabase)
-![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)
 
 > An end-to-end LLM pipeline that parses hospital discharge documents, translates clinical instructions into plain language, and conducts automated patient follow-up — reducing information loss at the point of care.
 
