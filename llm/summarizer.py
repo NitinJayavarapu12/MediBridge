@@ -81,7 +81,7 @@ def translate_to_plain_language(transcription: str) -> str:
     """Convert medical transcription to plain language."""
     prompt = PLAIN_LANGUAGE_PROMPT.format(transcription=transcription[:3000])
     
-    response = client.chat.completions.create(
+    response = get_groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,  # Low temp for accuracy
@@ -97,7 +97,7 @@ def extract_care_plan(transcription: str) -> dict:
     
     prompt = CARE_PLAN_PROMPT.format(transcription=transcription[:3000])
     
-    response = client.chat.completions.create(
+    response = get_groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.1,  # Very low for structured output
@@ -127,7 +127,7 @@ def run_confidence_check(transcription: str, care_plan: dict) -> dict:
         transcription=transcription[:3000]
     )
     
-    response = client.chat.completions.create(
+    response = get_groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.1,

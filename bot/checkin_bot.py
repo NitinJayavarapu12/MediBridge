@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+def get_groq_client():
+    return Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def get_twilio_client():
     return TwilioClient(
@@ -56,7 +57,7 @@ def generate_checkin_message(patient_name: str, care_plan: dict,
     Keep it under 2 sentences. Be warm and human, not clinical.
     """
     
-    response = groq_client.chat.completions.create(
+    response = get_groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
@@ -74,7 +75,7 @@ def respond_to_patient(patient_message: str, care_plan: dict) -> str:
         red_flags=red_flags
     )
     
-    response = groq_client.chat.completions.create(
+    response = get_groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": system},
@@ -99,7 +100,7 @@ def check_if_flagged(patient_message: str, care_plan: dict) -> tuple[bool, str]:
         red_flags=red_flags
     )
     
-    response = groq_client.chat.completions.create(
+    response = get_groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.1,
